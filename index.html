@@ -15,27 +15,29 @@
         button { width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .result-container { margin-top: 25px; display: none; text-align: left; }
         .status-msg { color: #10b981; font-size: 14px; font-weight: 500; margin-bottom: 8px; text-align: center; }
-        .key-box { background: #064e3b; border: 1px solid #059669; color: #a7f3d0; padding: 15px; border-radius: 8px; font-family: monospace; word-break: break-all; font-size: 13px; cursor: pointer; text-align: center; }
+        .key-box { background: #064e3b; border: 1px solid #059669; color: #a7f3d0; padding: 15px; border-radius: 8px; font-family: monospace; word-break: break-all; font-size: 13px; cursor: pointer; text-align: center; max-height: 150px; overflow-y: auto; }
+        .hint { font-size: 11px; color: #6b7280; text-align: center; margin-top: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Automated Trial (Direct)</h2>
+    <h2>Automated Trial</h2>
     <div class="subtitle">Maximize your village without hassle.</div>
     
     <label for="hwidInput">Hardware ID (HWID)</label>
     <input type="text" id="hwidInput" placeholder="Masukkan HWID Anda">
-    <button id="btnRequest" onclick="ambilKeyLangsung()">Request Trial Key</button>
+    <button id="btnRequest" onclick="ambilKeyBypass()">Request Trial Key</button>
 
     <div id="resultContainer" class="result-container">
         <div id="statusMsg" class="status-msg"></div>
         <div id="keyBox" class="key-box" onclick="salinKey()"></div>
+        <div class="hint">Tap the code above to copy.</div>
     </div>
 </div>
 
 <script>
-async function ambilKeyLangsung() {
+async function ambilKeyBypass() {
     const hwid = document.getElementById('hwidInput').value.trim();
     const resultContainer = document.getElementById('resultContainer');
     const statusMsg = document.getElementById('statusMsg');
@@ -45,51 +47,57 @@ async function ambilKeyLangsung() {
     if (!hwid) return alert("HWID wajib diisi!");
 
     btn.disabled = true;
-    btn.innerText = "Processing via Direct User IP...";
+    btn.innerText = "Bypassing CORS Security...";
     resultContainer.style.display = "none";
 
-    // Membuat email acak otomatis di sisi browser user
     const randomString = Math.random().toString(36).substring(2, 12);
     const randomEmail = `${randomString}@gmail.com`;
 
+    // Jalur API target asli CocotzBOT
+    const targetUrl = "https://n123.web.id";
+
+    // data payload JSON yang dikirim
+    const payload = {
+        email: randomEmail,
+        hwid: hwid
+    };
+
     try {
-        // 🔥 MENEMBAK LANGSUNG KE API PUSAT TANPA LEWAT WORKERS
-        const response = await fetch("https://n123.web.id", {
+        // 🔥 MENGGUNAKAN CORS PROXY BYPASS OPEN-SOURCE (AllOrigins) AGAR BROWSER TIDAK MEMBLOKIR
+        const response = await fetch("https://allorigins.win" + encodeURIComponent(targetUrl), {
             method: "POST",
             headers: {
-                "content-type": "application/json",
-                "accept": "*/*",
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-site"
+                "content-type": "application/json"
             },
-            body: JSON.stringify({
-                email: randomEmail,
-                hwid: hwid
-            })
+            body: JSON.stringify(payload)
         });
 
-        const textData = await response.text();
+        const proxyData = await response.json();
+        
         btn.disabled = false;
         btn.innerText = "Request Trial Key";
         resultContainer.style.display = "block";
 
+        // AllOrigins mengembalikan data asli di dalam properti .contents
+        const textData = proxyData.contents;
+
         try {
             const data = JSON.parse(textData);
+            
             if (data.token || data.key || data.data) {
                 statusMsg.style.color = "#10b981";
                 statusMsg.innerHTML = "Trial successful! Active for <span class='bold-green'>2 Days</span>";
-                keyBox.innerText = data.token || data.key || data.data || textData;
+                keyBox.innerText = data.token || data.key || data.data;
             } else {
                 statusMsg.style.color = "#ef4444";
-                statusMsg.innerText = data.message || "Gagal mendapat key.";
+                statusMsg.innerText = data.message || "Gagal! HWID mungkin sudah terdaftar.";
                 keyBox.innerText = textData;
             }
         } catch (e) {
-            // Jika browser memunculkan error CORS, infokan ke user
+            // Jika server pusat mengembalikan proteksi HTML Cloudflare
             statusMsg.style.color = "#ef4444";
-            statusMsg.innerText = "Terblokir Keamanan CORS Browser!";
-            keyBox.innerText = "Server pusat melarang domain luar menembak langsung. Harus pakai Ekstensi Allow-CORS.";
+            statusMsg.innerText = "Server pusat mendeteksi request otomatis.";
+            keyBox.innerText = textData;
         }
 
     } catch (error) {
@@ -97,14 +105,14 @@ async function ambilKeyLangsung() {
         btn.innerText = "Request Trial Key";
         resultContainer.style.display = "block";
         statusMsg.style.color = "#ef4444";
-        statusMsg.innerText = "Network Error!";
+        statusMsg.innerText = "Proxy Error!";
         keyBox.innerText = error.message;
     }
 }
 
 function salinKey() {
     const txt = document.getElementById('keyBox').innerText;
-    navigator.clipboard.writeText(txt).then(() => alert("Key disalin!"));
+    navigator.clipboard.writeText(txt).then(() => alert("Key berhasil disalin!"));
 }
 </script>
 
