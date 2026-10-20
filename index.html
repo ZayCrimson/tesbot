@@ -50,36 +50,45 @@ async function ambilKeyBypass() {
     btn.innerText = "Bypassing CORS Security...";
     resultContainer.style.display = "none";
 
+    // Bikin email random otomatis
     const randomString = Math.random().toString(36).substring(2, 12);
     const randomEmail = `${randomString}@gmail.com`;
 
-    // Jalur API target asli CocotzBOT
+    // ⚠️ ALAMAT API TARGET ASLI COCOTZBOT
     const targetUrl = "https://n123.web.id";
-
-    // data payload JSON yang dikirim
-    const payload = {
-        email: randomEmail,
-        hwid: hwid
-    };
+    
+    // ⚠️ PROXY JALUR KHUSUS UNTUK MENEMBUS BLOKIR CORS BROWSER
+    const proxyUrl = "https://herokuapp.com";
 
     try {
-        // 🔥 MENGGUNAKAN CORS PROXY BYPASS OPEN-SOURCE (AllOrigins) AGAR BROWSER TIDAK MEMBLOKIR
-        const response = await fetch("https://allorigins.win" + encodeURIComponent(targetUrl), {
+        // Menembak ke API pusat lewat jembatan Cors-Anywhere
+        const response = await fetch(proxyUrl + targetUrl, {
             method: "POST",
             headers: {
-                "content-type": "application/json"
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Origin": "https://n123.web.id",
+                "Referer": "https://n123.web.id/"
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+                email: randomEmail,
+                hwid: hwid
+            })
         });
 
-        const proxyData = await response.json();
+        const textData = await response.text();
         
         btn.disabled = false;
         btn.innerText = "Request Trial Key";
         resultContainer.style.display = "block";
 
-        // AllOrigins mengembalikan data asli di dalam properti .contents
-        const textData = proxyData.contents;
+        // Jika akses proxy penuh atau butuh aktivasi sementara
+        if (textData.includes("See /corsdemo")) {
+            statusMsg.style.color = "#ef4444";
+            statusMsg.innerText = "Aktivasi Proxy Diperlukan!";
+            keyBox.innerText = "Buka tautan https://herokuapp.comcorsdemo di tab baru Chrome Anda, klik tombol 'Request temporary access', lalu coba klik request key lagi di web ini.";
+            return;
+        }
 
         try {
             const data = JSON.parse(textData);
@@ -94,7 +103,6 @@ async function ambilKeyBypass() {
                 keyBox.innerText = textData;
             }
         } catch (e) {
-            // Jika server pusat mengembalikan proteksi HTML Cloudflare
             statusMsg.style.color = "#ef4444";
             statusMsg.innerText = "Server pusat mendeteksi request otomatis.";
             keyBox.innerText = textData;
@@ -105,7 +113,7 @@ async function ambilKeyBypass() {
         btn.innerText = "Request Trial Key";
         resultContainer.style.display = "block";
         statusMsg.style.color = "#ef4444";
-        statusMsg.innerText = "Proxy Error!";
+        statusMsg.innerText = "Proxy Connection Error!";
         keyBox.innerText = error.message;
     }
 }
